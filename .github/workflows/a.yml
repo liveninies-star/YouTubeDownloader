@@ -1,0 +1,49 @@
+name: Create Empty Zip File
+
+on:
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  create-empty-zip:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Create test folder
+        run: |
+          mkdir -p test-download-folder
+      
+      - name: Create an empty zip file inside the folder
+        run: |
+          # Create an empty zip file using touch (valid zip format requires actual zip command)
+          # Option 1: Create a truly empty placeholder file
+          touch test-download-folder/empty-placeholder.zip
+          
+          # Option 2: Create a proper (but empty) zip file using zip command
+          # This creates a valid zip file with no contents
+          cd test-download-folder
+          zip empty-valid.zip /dev/null 2>/dev/null || true
+          zip empty-valid2.zip --out test.zip 2>/dev/null || echo "U" | zip -q test.zip -
+          
+          # Option 3: Simplest working empty zip
+          echo -n "PK\x05\x06" > simplest-empty.zip
+          
+          # Option 4: Create a zip file containing a README (so it's not empty)
+          echo "This is a test file for download testing" > README.txt
+          zip with-content.zip README.txt
+          rm README.txt
+          
+          cd ..
+      
+      - name: List created files
+        run: |
+          echo "Files created in test-download-folder:"
+          ls -la test-download-folder/
+      
+      - name: Upload as artifact (optional - for web download testing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-zip-files
+          path: test-download-folder/
